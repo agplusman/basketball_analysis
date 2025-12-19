@@ -7,7 +7,7 @@ This guide walks through building and running the basketball video analysis pipe
 - **Folder structure** (already present in this repo):
   - `input_videos/` for sample or custom footage.
   - `models/` for the trained weights (`player_detector.pt`, `ball_detector_model.pt`, `court_keypoint_detector.pt`).
-  - Processing modules: `trackers/`, `team_assigner/`, `ball_aquisition/`, `pass_and_interception_detector/`, `court_keypoint_detector/`, `tactical_view_converter/`, `speed_and_distance_calculator/`, `drawers/`, `utils/`, plus `configs/` for defaults.
+  - Processing modules: `trackers/`, `team_assigner/`, `ball_aquisition/`, `pass_and_interception_detector/`, `court_keypoint_detector/`, `tactical_view_converter/`, `speed_and_distance_calculator/`, `drawers/`, `utils/`, plus `configs/` for defaults. The orchestration logic now lives in `pipeline_runner.py` so it can be imported directly by API services (e.g., RunPod) or the CLI.
 - **Dependencies**: create a virtual environment and install `pip install -r requirements.txt`. Key packages include `ultralytics`, `opencv-python`, `supervision`, `pandas`, `numpy`, and `transformers` (for zero-shot jersey classification).
 - **Inputs**: place your videos in `input_videos/`. The reference demo uses three clips—one each for distance/speed, passes, and interceptions.
 
@@ -59,14 +59,33 @@ This guide walks through building and running the basketball video analysis pipe
 
 ## Phase 8: Running the Pipeline
 
+### Local or Server (including RunPod/API reuse)
+
 1. Place your trained weights in `models/` (or use the downloadable defaults) and your input video in `input_videos/`.
-2. Run the main script:
+2. Run via CLI:
    ```bash
    python main.py input_videos/video1.mp4 --output_video output_videos/output_result.avi --stub_path stubs
    ```
    - `--stub_path` controls where detection/tracking caches are stored.
    - `--output_video` sets the annotated output path (default configured in `configs/`).
-3. The pipeline performs detection, tracking, team assignment, possession/pass/interception detection, tactical-view projection, speed/distance estimation, and writes the fully annotated video to `output_videos/`.
+3. Programmatic use (e.g., RunPod handler):
+   ```python
+   from pipeline_runner import run_analysis
+   run_analysis("input_videos/video1.mp4", output_video_path="output_videos/output_result.avi", stub_path="stubs")
+   ```
+
+### Google Colab (GPU)
+
+1. Upload or clone the repo in Colab and switch to a GPU runtime.
+2. Bootstrap dependencies and download pretrained weights in a cell:
+   ```bash
+   !python colab_setup.py --install-deps --download-models --models-dir models
+   ```
+3. Upload your input video to `input_videos/` (or mount Drive) and run:
+   ```bash
+   !python main.py input_videos/video1.mp4 --output_video output_videos/output_result.avi --stub_path stubs
+   ```
+4. The pipeline performs detection, tracking, team assignment, possession/pass/interception detection, tactical-view projection, speed/distance estimation, and writes the fully annotated video to `output_videos/`.
 
 ## Troubleshooting Tips
 
